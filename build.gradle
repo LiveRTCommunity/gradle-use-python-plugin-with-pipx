@@ -14,15 +14,16 @@ plugins {
     id 'ru.vyarus.mkdocs' version '3.0.0'
 }
 
-sourceCompatibility = 1.8
 
+sourceCompatibility = 1.8
+python.pip()
 wrapper {
-    gradleVersion = '6.9'
+    gradleVersion = '8.5'
 }
 
 repositories { mavenLocal(); mavenCentral(); gradlePluginPortal() }
 dependencies {
-    implementation ('org.testcontainers:testcontainers:1.19.3')
+    implementation('org.testcontainers:testcontainers:1.19.3')
 
     testImplementation('org.spockframework:spock-core:2.0-groovy-2.5') {
         exclude group: 'org.codehaus.groovy'
@@ -32,17 +33,17 @@ dependencies {
 }
 
 group = 'ru.vyarus'
-description = 'Use python modules in gradle build'
+description = 'Use python modules with pipx in gradle build'
 
 github {
-    user 'xvik'
+    user 'TheoMinariniDeMelo'
     license 'MIT'
 }
 
 mkdocs {
     extras = [
             'version': '3.0.0',
-            'image': 'python:3.10.8-alpine3.15'
+            'image'  : 'python:3.10.8-alpine3.15'
     ]
     publish {
         docPath = mkdocs.extras['version']
@@ -72,7 +73,7 @@ nexusPublishing {
 }
 
 // skip signing for jitpack (snapshots)
-tasks.withType(Sign) {onlyIf { !System.getenv('JITPACK') }}
+tasks.withType(Sign) { onlyIf { !System.getenv('JITPACK') } }
 
 // Required signing properties for release: signing.keyId, signing.password and signing.secretKeyRingFile
 // (https://docs.gradle.org/current/userguide/signing_plugin.html#sec:signatory_credentials)
@@ -81,11 +82,13 @@ javaLib {
     // don't publish gradle metadata artifact
     withoutGradleMetadata()
 }
-
+dependencies {      //
+    implementation "org.apache.commons:commons-lang3:3.12.0"
+}
 
 gradlePlugin {
     plugins {
-        usePythonPlugin {
+        usePythonPluginWithPipx {
             id = 'ru.vyarus.use-python'
             displayName = project.description
             implementationClass = 'ru.vyarus.gradle.plugin.python.PythonPlugin'
@@ -101,7 +104,6 @@ pluginBundle {
         artifactId = project.name
     }
 }
-
 release.git.requireBranch.set('master')
 
 afterReleaseBuild {

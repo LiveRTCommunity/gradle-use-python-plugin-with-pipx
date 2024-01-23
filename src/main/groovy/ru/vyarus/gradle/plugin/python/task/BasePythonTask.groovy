@@ -12,7 +12,7 @@ import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 import org.gradle.api.tasks.Optional
-import org.gradle.util.ClosureBackedAction
+import org.gradle.util.internal.ClosureBackedAction
 import ru.vyarus.gradle.plugin.python.cmd.Python
 import ru.vyarus.gradle.plugin.python.cmd.docker.ContainerManager
 import ru.vyarus.gradle.plugin.python.cmd.docker.DockerConfig
@@ -248,7 +248,7 @@ class BasePythonTask extends ConventionTask {
         Path projectDir = project.rootProject.rootDir.toPath()
         int uid = (int) Files.getAttribute(projectDir, 'unix:uid', LinkOption.NOFOLLOW_LINKS)
         int gid = (int) Files.getAttribute(projectDir, 'unix:gid', LinkOption.NOFOLLOW_LINKS)
-        dockerExec(['chown' , '-Rh', "$uid:$gid", dir.toAbsolutePath()])
+        dockerExec(['chown', '-Rh', "$uid:$gid", dir.toAbsolutePath()])
     }
 
     /**

@@ -16,7 +16,6 @@ package ru.vyarus.gradle.plugin.python.cmd
  * @since 27.02.2021
  */
 interface LoggedCommandCleaner {
-
     /**
      * Called before logging executed python command into console to hide possible sensitive command parts.
      *

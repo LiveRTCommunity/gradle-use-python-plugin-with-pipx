@@ -14,6 +14,10 @@ import ru.vyarus.gradle.plugin.python.task.pip.BasePipTask
 import ru.vyarus.gradle.plugin.python.task.pip.PipInstallTask
 import ru.vyarus.gradle.plugin.python.task.pip.PipListTask
 import ru.vyarus.gradle.plugin.python.task.pip.PipUpdatesTask
+import ru.vyarus.gradle.plugin.python.task.pipx.BasePipxTask
+import ru.vyarus.gradle.plugin.python.task.pipx.PipxInstallTask
+import ru.vyarus.gradle.plugin.python.task.pipx.PipxListTask
+import ru.vyarus.gradle.plugin.python.task.pipx.PipxUpdatesTask
 import ru.vyarus.gradle.plugin.python.util.RequirementsReader
 
 /**
@@ -52,24 +56,36 @@ class PythonPlugin implements Plugin<Project> {
         }
 
         // default pip install task
-        TaskProvider<PipInstallTask> installTask = project.tasks.register('pipInstall', PipInstallTask) {
+        TaskProvider<PipInstallTask> installPipTask = project.tasks.register('pipInstall', PipInstallTask) {
             it.with {
                 description = 'Install pip modules'
             }
         }
-
+        TaskProvider<PipxInstallTask> installPipxTask = project.tasks.register('pixpInstall', PipxInstallTask) {
+            it.with {
+                description = 'Install pipx modules'
+            }
+        }
         project.tasks.register('pipUpdates', PipUpdatesTask) {
             it.with {
                 description = 'Check if new versions available for declared pip modules'
             }
         }
-
+        project.tasks.register('pipxUpdates', PipxUpdatesTask) {
+            it.with {
+                description = 'Check if new versions available for declared pipx modules'
+            }
+        }
         project.tasks.register('pipList', PipListTask) {
             it.with {
                 description = 'Show all installed modules'
             }
         }
-
+        project.tasks.register("pipxList", PipxListTask) {
+            it.with {
+                description = 'Show all installed modules'
+            }
+        }
         project.tasks.register('cleanPython', Delete) {
             it.with {
                 group = 'python'
@@ -79,7 +95,7 @@ class PythonPlugin implements Plugin<Project> {
             }
         }
 
-        configureDefaults(project, extension, checkTask, installTask)
+        configureDefaults(project, extension, checkTask, installPipTask)
         configureDocker(project)
     }
 
@@ -88,7 +104,7 @@ class PythonPlugin implements Plugin<Project> {
     private void configureDefaults(Project project,
                                    PythonExtension extension,
                                    TaskProvider<CheckPythonTask> checkTask,
-                                   TaskProvider<PipInstallTask> installTask) {
+                                   TaskProvider<PipInstallTask> installPipTask) {
 
         project.tasks.withType(BasePythonTask).configureEach { task ->
             task.with {
@@ -113,7 +129,7 @@ class PythonPlugin implements Plugin<Project> {
 
         project.tasks.withType(PythonTask).configureEach { task ->
             // by default all python tasks must be executed after dependencies init
-            task.dependsOn installTask
+            task.dependsOn installPipTask
         }
 
         // apply defaults for pip tasks
@@ -129,9 +145,26 @@ class PythonPlugin implements Plugin<Project> {
                 strictRequirements = { extension.requirements.strict }
             }
         }
-
+        project.tasks.withType(BasePipxTask).configureEach { task ->
+            task.conventionMapping.with {
+                modules = { extension.modules }
+                // in case of virtualenv checkPython will manually disable it
+                userScope = { extension.scope != PythonExtension.Scope.GLOBAL }
+                useCache = { extension.usePipCache }
+                trustedHosts = { extension.trustedHosts }
+                extraIndexUrls = { extension.extraIndexUrls }
+                requirements = { RequirementsReader.find(project, extension.requirements) }
+                strictRequirements = { extension.requirements.strict }
+            }
+        }
         // apply defaults for all pip install tasks (custom pip installs may be used)
         project.tasks.withType(PipInstallTask).configureEach { task ->
+            task.conventionMapping.with {
+                showInstalledVersions = { extension.showInstalledVersions }
+                alwaysInstallModules = { extension.alwaysInstallModules }
+            }
+        }
+        project.tasks.withType(PipxInstallTask).configureEach { task ->
             task.conventionMapping.with {
                 showInstalledVersions = { extension.showInstalledVersions }
                 alwaysInstallModules = { extension.alwaysInstallModules }

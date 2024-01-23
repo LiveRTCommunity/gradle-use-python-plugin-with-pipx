@@ -1,6 +1,7 @@
 package ru.vyarus.gradle.plugin.python
 
 import groovy.transform.CompileStatic
+import org.codehaus.groovy.runtime.ScriptBytecodeAdapter
 import org.gradle.api.Project
 import ru.vyarus.gradle.plugin.python.task.pip.module.ModuleFactory
 
@@ -56,6 +57,12 @@ class PythonExtension {
      * be used (9, 8.2, etc). By default pip 9 is required.
      */
     String minPipVersion = '9'
+
+    /**
+     * Minimal required pipx version. Format is the same as python version: "major.minor.micro". Any precision could
+     * be used (+0.16.3). By default pip 9 is required.
+     */
+    String minPipxVersion = '0.16.3'
 
     /**
      * Pip modules to install. Modules are installed in the declaration order.
@@ -219,6 +226,40 @@ class PythonExtension {
      * @param modules pip modules to install
      */
     void pip(Iterable<String> modules) {
+        this.modules.addAll(modules)
+    }
+
+    /**
+     * Declare pipx modules to install. Format: "moduleName:version". Only exact version
+     * matching is supported (pipx support ranges, but this is intentionally not supported in order to avoid
+     * side effects).
+     * <p>
+     * Feature syntax is also allowed: "moduleName[qualifier]:version". As it is impossible to detect enabled features
+     * of installed modules then qualified module will not be installed if module with the same name and
+     * version is already installed (moduleName:version).
+     * <p>
+     * VCS module declaration is also supported in format: "vcs+protocol://repo_url/@vcsVersion#egg=pkg-pkgVersion".
+     * Note that it requires both vcs version (e.g. commit hash) and package version in order to be able to perform
+     * up-to-date check. You can specify branch name or tag (for example, for git) instead of direct hash, but
+     * prefer using exact version (hash or tags, not branches) in order to get reproducible builds.
+     * See <a href="https://pip.pypa.io/en/stable/reference/pip_install/#vcs-support">pip vcs docs</p>.
+     * <p>
+     * Duplicate declarations are allowed: in this case the latest declaration will be used.
+     * <p>
+     * Note: if newer package version is already installed, pip will remove it and install correct version.
+     *
+     * @param modules pipx modules to install
+     *
+     * */
+    void pipx(String... modules) {
+        pip(Arrays.asList(modules))
+    }
+    /**
+     * Shortcut for {@link #pip(java.lang.Iterable)}.
+     *
+     * @param modules pipx modules to install
+     */
+    void pipx(Iterable<String> modules) {
         this.modules.addAll(modules)
     }
 
